@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors')
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config()
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config();
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express()
 app.use(cors());
@@ -21,6 +23,72 @@ async function run(){
         const categoryCollection = client.db('beautyBin').collection('category')
         const productCollection = client.db('beautyBin').collection('products')
         const orderCollection = client.db('beautyBin').collection('order')
+        const buyerCollection = client.db('beautyBin').collection('buyer')
+        const sellerCollection = client.db('beautyBin').collection('seller')
+        const paymentsCollection = client.db('beautyBin').collection('payment')
+
+
+        // app.post('/create-payment-intent', async(req, res)=>{
+        //     const order = req.body;
+        //     const price = order.price;
+        //     const amount = price*100;
+
+        //     const paymentIntent = await stripe.paymentIntents.create({
+               
+        //         currency: "usd",
+        //         amount: amount,
+        //         "payment_method_types": [
+        //             "card"
+        //         ],
+        //       });
+        //       res.send({
+        //         clientSecret: paymentIntent.client_secret,
+        //       });
+            
+        // })
+
+        // app.post('/create-payment-intent', async(req, res)=>{
+
+        //     const order = req.body;
+        //     const price = order.price;
+        //     const amount = price*100;
+
+        //     const paymentIntent = await stripe.paymentIntents.create({
+        //         currency: 'usd',
+        //         amount: amount,
+        //         "payment_method_types" : [
+        //             "card"
+        //         ]
+        //     });
+        //     res.send({
+        //         clientSecret: paymentIntent.client_secret,
+        //     });
+
+        // })
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const order = req.body;
+            const price = parseFloat(order.resale_price);
+            
+            const amount = Math.round(price * 100);
+          
+            const paymentIntent = await stripe.paymentIntents.create({
+              currency: 'usd',
+              amount,
+              payment_method_types: ['card'],
+            });
+
+            res.send({
+                 clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res)=>{
+            const payment =req.body;
+            const result = await paymentsCollection.insertOne(payment)
+            res.send(result)
+
+        });
 
         app.get('/category', async (req, res)=>{
             const query = {}
@@ -48,6 +116,41 @@ async function run(){
             console.log(orders);
             const result = await orderCollection.insertOne(orders);
             res.send(result);
+        });
+
+         app.get('/order', async(req, res) =>{
+           let query = {}
+           if(req.query.email){
+            query = {
+                email: req.query.email
+            }
+           }
+           const cursor = orderCollection.find(query);
+           const orders = await cursor.toArray();
+           res.send(orders);
+        });
+
+         app.get('/order/:id', async(req, res) =>{
+           const id = req.params.id;
+           const query = {_id: new ObjectId(id)}
+            const orders = await orderCollection.findOne(query)
+           res.send(orders);
+        });
+
+        
+
+
+        app.post('/buyer', async(req, res) =>{
+            const buyer = req.body;
+            const result = await sellerCollection.insertOne(buyer);
+            res.send(result);
+          
+        });
+        app.post('/seller', async(req, res) =>{
+            const seller = req.body;
+            const result = await buyerCollection.insertOne(seller);
+            res.send(result);
+          
         });
 
     }
