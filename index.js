@@ -23,9 +23,11 @@ async function run(){
         const categoryCollection = client.db('beautyBin').collection('category')
         const productCollection = client.db('beautyBin').collection('products')
         const orderCollection = client.db('beautyBin').collection('order')
-        const buyerCollection = client.db('beautyBin').collection('buyer')
-        const sellerCollection = client.db('beautyBin').collection('seller')
+        const userCollection = client.db('beautyBin').collection('user')
+        // const sellerCollection = client.db('beautyBin').collection('seller')
         const paymentsCollection = client.db('beautyBin').collection('payment')
+        const addProductCollection = client.db('beautyBin').collection('addProducts')
+
 
 
         // app.post('/create-payment-intent', async(req, res)=>{
@@ -137,21 +139,40 @@ async function run(){
            res.send(orders);
         });
 
+         app.post('/addproduct', async(req, res) =>{
+            const addProduct = req.body;
+           
+            const result = await addProductCollection.insertOne(addProduct);
+            res.send(result);
+        });
+        app.get('/addproduct', async(req, res) =>{
+           let query = {}
+           if(req.query.email){
+            query = {
+                email: req.query.email
+            }
+           }
+           const cursor = addProductCollection.find(query);
+           const addProduct = await cursor.toArray();
+           res.send(addProduct);
+        });
+
+
         
 
 
-        app.post('/buyer', async(req, res) =>{
-            const buyer = req.body;
-            const result = await sellerCollection.insertOne(buyer);
+        app.post('/user', async(req, res) =>{
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
             res.send(result);
           
         });
-        app.post('/seller', async(req, res) =>{
-            const seller = req.body;
-            const result = await buyerCollection.insertOne(seller);
-            res.send(result);
+        // app.post('/seller', async(req, res) =>{
+        //     const seller = req.body;
+        //     const result = await buyerCollection.insertOne(seller);
+        //     res.send(result);
           
-        });
+        // });
 
     }
     catch{
