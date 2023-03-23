@@ -157,6 +157,29 @@ async function run(){
            res.send(addProduct);
         });
 
+        app.get('/buyer', async(req, res)=>{
+            let query = {};
+            if(req.query.Role){
+                query = {
+                    Role: req.query.Role
+                }
+            }
+            const cursor = userCollection.find(query)
+            const buyer = await cursor.toArray();
+            res.send(buyer)
+        })
+        app.get('/seller', async(req, res)=>{
+            let query = {};
+            if(req.query.Role){
+                query = {
+                    Role: req.query.Role
+                }
+            }
+            const cursor = userCollection.find(query)
+            const buyer = await cursor.toArray();
+            res.send(buyer)
+        })
+
 
         
 
@@ -167,6 +190,21 @@ async function run(){
             res.send(result);
           
         });
+
+
+        app.put('user/admin/:id', async(req, res)=>{
+            const id = req.params.id
+            const filter = {_id: ObjectId(id)}
+            const options = {upsert : true}
+            const updateDoc = {
+                $set: {
+                    Role: 'admin'
+                } 
+            }
+            const result = await userCollection.updateOne(filter, updateDoc, options)
+            req.send(result)
+        })
+
         // app.post('/seller', async(req, res) =>{
         //     const seller = req.body;
         //     const result = await buyerCollection.insertOne(seller);
